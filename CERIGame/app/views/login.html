@@ -1,0 +1,19 @@
+<form name="form" ng-submit="login($event)" role="form">
+	<div>
+		<label>Login</label>
+		<input name="login" required ng-model="username" type="text" placeholder="Login">
+	</div>
+	<div>
+		<label>Mot de passe</label>
+		<input name="password" required ng-model="password" type="password" placeholder="Password">
+	</div>
+	<p ng-hide="lastLoggin === null"><small>Dernière connexion le : {{lastLoggin}}</small></p>
+	<button type="submit">Submit</button>
+</form>
+<div ng-hide="logginStatus === null" ng-class="logginStatus ? 'alert-success' : 'alert-warning'" class="alert-auth alert alert-dismissible fade show" role="alert">
+	<strong>{{res}}
+	<button type="button" class="close" ng-click="logginStatus = null">
+	<span aria-hidden="true">&times;</span>
+	</button>
+</div>
+

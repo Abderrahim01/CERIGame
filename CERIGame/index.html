@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Title of the document</title>
+
+	<link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css"
+	 integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU"
+	 crossorigin="anonymous">
+	<link rel="stylesheet" href="css/style.css">
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+
+	<script src="lib/angular-base64-upload.js"></script>
+	<script src="lib/underscore.js"></script>
+
+	<script src="app/services/service.js"></script>
+	<script src="app/controllers/authController.js"></script>
+	<script src="app/controllers/profileController.js"></script>
+	<script src="app/controllers/routeController.js"></script>
+	<script src="app/controllers/quizzController.js"></script>
+	<script src="app/controllers/leaderboardController.js"></script>
+	<script src="app/controllers/notificationController.js"></script>
+	<script src="app/app.js"></script>
+
+
+</head>
+
+<body ng-app="CERIGame" ng-controller="authController">
+
+	<!--    Page de connexion -->
+	<div ng-hide="isLoggedIn()" class="auth-form-container">
+		<form name="form" ng-submit="login()" role="form">
+			<div class="form-group">
+				<label for="exampleInputEmail1">Login</label>
+				<input name="login" required ng-model="username" type="text" class="form-control" id="exampleInputEmail1"
+				 aria-describedby="emailHelp" placeholder="Login">
+			</div>
+			<div class="form-group">
+				<label for="exampleInputPassword1">Mot de passe</label>
+				<input name="password" type="password" required ng-model="password" class="form-control" id="exampleInputPassword1"
+				 placeholder="Password">
+			</div>
+			<p ng-hide="lastLoggin === null"><small>Dernière connexion le : {{lastLoggin}}</small></p>
+			<button type="submit" ng-disabled="form.$invalid || vm.dataLoading" class="btn btn-primary">Submit</button>
+		</form>
+		<div ng-hide="logginStatus === null" ng-class="logginStatus ? 'alert-success' : 'alert-warning'" class="alert-auth alert alert-dismissible fade show"
+		 role="alert">
+			<strong>{{msg}}</strong>
+			<button type="button" class="close" aria-label="Close" ng-click="logginStatus = null">
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+	</div>
+
+
+	<!--     Page principale -->
+	<div ng-show="isLoggedIn()" class="container-fluid h-100 p-0">
+
+		<div class="row mx-0 h-100" ng-controller="routeController">
+			<div class="navmenu shadow col-xs-12 col-sm-1 p-0 d-flex" style="background: white;">
+				<div class="text-center p-4 w-100"><i class="fas fa-user-circle" ng-click="updateRoute('profile')"></i></div>
+				<div class="text-center p-4 w-100"><i class="fas fa-play-circle" ng-click="updateRoute('jeu')"></i></div>
+				<div class="text-center p-4 w-100"><i class="fas fa-trophy" ng-click="updateRoute('leaderboard')"></i></div>
+				<div class="text-center p-4 w-100"><i class="fas fa-bell" ng-click="updateRoute('notification')"></i></div>
+				<div class="text-center p-4 w-100 d-flex flex-column justify-content-end" style="flex: 1;" ng-click="logout()"><i
+					 class="fas fa-sign-out-alt"></i></div>
+			</div>
+
+			<div class="col-11 p-0" ng-controller="profileController" ng-show="route === 'profile'">
+				<div class="overflow container h-100 p-4">
+
+
+					<!-- Profil -->
+					<div class="row mb-5">
+						<div class="col">
+							<h3 class="mb-0"><strong>Profil</strong></h3>
+							<p class="text-muted mb-4">Visualiser et modifier votre profil</p>
+							<div class="card text-center" style="height: 360px; width: 300px">
+								<div class="card-body d-flex flex-column justify-content-center align-items-center">
+									<div class="rounded-circle mb-4 mt-2" ng-style="{ 'background-image': avatar ? 'url(' + avatar + ')' : 'url(img/profile.jpg)' }"
+									 style="height: 75px; width: 75px; margin:0 auto; background-size: cover;">
+										<div class="rounded-circle d-flex justify-content-center align-items-center overlay" style="width: 75px; height: 75px">
+											<label for="exampleInputFile" class="bmd-label-floating mb-0">
+												<i style="color: white; cursor: pointer;" class="fas fa-upload"></i>
+											</label>
+											<input type="file" ng-model="file" base-sixty-four-input accept="image/*" class="form-control-file" id="exampleInputFile"
+											 style="position: fixed; top: -100em">
+										</div>
+										<div class="position-relative rounded-circle" style="height: 20px; width: 20px; background: #a0d911; top:-15px; left: 50px; border: 3px solid white"></div>
+									</div>
+									<form name="form" class="mb-0" ng-submit="updateProfile()">
+										<div class="row px-4">
+											<div class="col form-group text-left">
+												<label for="exampleInputEmail1" class="bmd-label-floating">Nom</label>
+												<input required type="text" class="form-control" id="exampleInputEmail1" ng-model="nom">
+											</div>
+											<div class="col form-group text-left">
+												<label for="exampleInputEmail1" class="bmd-label-floating">Prénom</label>
+												<input required type="text" class="form-control" id="exampleInputEmail1" ng-model="prenom">
+											</div>
+										</div>
+										<div class="row px-4 mb-4">
+											<div class="col form-group text-left">
+												<label for="exampleInputEmail1" class="bmd-label-floating">Identifiant</label>
+												<input required type="text" class="form-control" id="exampleInputEmail1" ng-model="identifiant">
+											</div>
+										</div>
+										<button ng-disabled="!form.$dirty" class="mb-0 btn btn-primary">Mettre à jour</button>
+									</form>
+								</div>
+							</div>
+
+
+						</div>
+					</div>
+
+
+
+					<!-- Historique -->
+					<div class="row">
+						<div class="col">
+							<h3 class="mb-0"><strong>Historique</strong></h3>
+							<p class="text-muted mb-4">Visualiser votre historique de jeu</p>
+							<p ng-if="!hist.length" class="lead">Il semblerez que vous n'ayez pas encore joué.</p>
+							<table ng-if="hist.length" class="table">
+								<thead>
+									<tr>
+										<th scope="col">#</th>
+										<th scope="col">Date</th>
+										<th scope="col">Bonne réponse</th>
+										<th scope="col">Temps</th>
+										<th scope="col">Score</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr ng-repeat="x in hist | orderBy: 'score'">
+										<th scope="row">{{$index}}</th>
+										<td>{{ x.date | date: 'dd/MM/yyyy hh:mm' }}</td>
+										<td>{{ x.nbreponse }}</td>
+										<td>{{ x.temps }}</td>
+										<td>{{ x.score }}</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+
+					<!-- Médailles -->
+					<div class="row">
+						<div class="col">
+							<h3 class="mb-0"><strong>Médailles</strong></h3>
+							<p class="text-muted mb-4">Visualiser vos médailles</p>
+							<p ng-if="!medailles.length" class="lead">Il semblerez que vous n'ayez aucune médailles.</p>
+							<p ng-if="medailles.length" ng-repeat="x in medailles">Médaille gagnée le {{x.date | date : 'dd/MM/yyyy hh:mm' }} face à {{x.identifiant}}</p>
+						</div>
+					</div>
+
+
+
+				</div>
+			</div>
+
+
+
+
+
+
+
+			<!-- Jeu -->
+			<div class="overflow col p-0" ng-controller="quizzController" ng-show="route === 'jeu'">
+				<div class="container h-100 p-4">
+					<div class="h-100">
+						<div class="w-100">
+							<h3 class="mb-0"><strong>Jouer</strong></h3>
+							<p class="text-muted">Testez vos connaissance à l'aide d'un quizz !</p>
+						</div>
+
+						<div class="d-flex flex-column justify-content-center" style="height: calc(100% - 58.6px)">
+
+
+							<div class="" ng-hide="enJeu">
+								<div class="form-group">
+									<label for="exampleSelect1" class="bmd-label-floating">Thème</label>
+									<select class="form-control" id="exampleSelect1" ng-model="theme">
+										<option>Héros Marvel</option>
+										<option>Musée du Louvre</option>
+										<option>Star Wars</option>
+										<option>Animaux célèbres</option>
+										<option>Tintin</option>
+										<option>Russia 2018 (Coupe du monde de football 2018)</option>
+										<option>Culture générale 4 (La culture, c'est l'expression du vivant)</option>
+										<option>Trouvez le nombre</option>
+										<option>Culture générale</option>
+										<option>Actu people : août 2018 (Ils ont fait l'actualité)</option>
+										<option>Linux</option>
+									</select>
+								</div>
+								<div class="form-group mb-4">
+									<label for="exampleSelect1" class="bmd-label-floating">Niveau</label>
+									<select class="form-control" id="exampleSelect1" ng-model="niveau">
+										<option>Facile</option>
+										<option>Intermédiaire</option>
+										<option>Difficile</option>
+									</select>
+								</div>
+								<div class="form-group mt-4">
+									<button class="mb-0 btn btn-primary float-right" ng-click="getQuizz()">Démarrer &#x3e;</button>
+								</div>
+							</div>
+
+
+
+							<div class="container" ng-show="enJeu">
+								<div class="row mt-3 justify-content-between" ng-hide="partieFini">
+									<p>{{quizz[quizzIdx].question}}</p>
+									<p><span ng-if="chronoMin !== 0">{{chronoMin}}min</span> {{chronoSec}}s</p>
+								</div>
+
+								<div class="row" ng-hide="partieFini">
+									{{quizzIdx}} / 5
+								</div>
+
+
+								<div class="row" ng-repeat="x in quizz[quizzIdx].propositions" ng-hide="partieFini">
+									<div class="card col mt-4 p-4 d-flex justify-content-center align-items-center" ng-click="incIdx(x, $event)"
+									 style="height: 100px; cursor: pointer;">
+										{{x}}
+									</div>
+								</div>
+
+								<div class="row flex-column text-center" ng-show="partieFini">
+									<p class="display-4"><strong>{{score}}</strong></p>
+									<p class="display-4" ng-if="quizzType === 'defi'">Score défiant : {{userDefiantScore}}</p>
+									<div>
+										<button class="btn btn-primary" ng-click="restart()">Recommencer</button>
+										<button ng-hide="defiEnvoye || quizzType === 'defi'" class="btn btn-primary" ng-click="initDefi()">Lancer un
+											défi</button>
+									</div>
+
+									<div ng-show="defi" class="ng-hide">
+										<select class="form-control" id="exampleFormControlSelect1" ng-model="userDefiee">
+											<option ng-repeat="user in users" value="{{user.id}}">{{user.identifiant}}</option>
+										</select>
+										<button class="btn btn-primary" ng-click="sendDefi()" ng-if="quizzType === 'default'">Défier !</button>
+									</div>
+								</div>
+
+							</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+
+
+
+
+
+
+
+
+			<!-- Classement -->
+			<div class="overflow col p-0" ng-controller="leaderboardController" ng-show="route === 'leaderboard'">
+				<div class="container h-100 p-4">
+					<div class="row">
+						<div class="col">
+							<h3 class="mb-0"><strong>Utilisateurs connectés</strong></h3>
+							<p class="text-muted mb-4">Visualiser les utilisateurs connectés</p>
+							<p ng-if="!cUsers.length" class="lead">Aucune personne connectée actuellement.</p>
+						</div>
+
+					</div>
+
+					<div class="row" style="height: calc(100% - 81px)" ng-if="loading">
+						<div class="col d-flex justify-content-center align-items-center">
+							<svg class="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+								<circle class="path" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
+							</svg>
+						</div>
+					</div>
+
+					<div class="row mb-4" ng-if="!loading">
+
+
+
+
+						<div class="card m-3 text-center" style="height: 360px; width: 300px" ng-repeat="x in cUsers">
+							<div class="card-body d-flex flex-column justify-content-center align-items-center">
+								<div class="rounded-circle mb-4 mt-2" ng-style="{ 'background-image': x.avatar ? 'url(' + x.avatar + ')' : 'url(img/profile.jpg)' }"
+								 style="height: 75px; width: 75px; margin:0 auto; background-size: cover;">
+									<div class="position-relative rounded-circle" style="height: 20px; width: 20px; background: #a0d911; top:57px; left: 50px; border: 3px solid white"></div>
+								</div>
+								<form name="form" class="mb-0" ng-submit="updateProfile()">
+									<div class="row px-4">
+										<div class="col form-group text-left">
+											<label for="exampleInputEmail1" class="bmd-label-floating">Nom</label>
+											<input required type="text" disabled class="form-control-plaintext" id="exampleInputEmail1" ng-value="x.nom">
+										</div>
+										<div class="col form-group text-left">
+											<label for="exampleInputEmail1" class="bmd-label-floating">Prénom</label>
+											<input required type="text" disabled class="form-control-plaintext" id="exampleInputEmail1" ng-value="x.prenom">
+										</div>
+									</div>
+									<div class="row px-4">
+										<div class="col form-group text-left">
+											<label for="exampleInputEmail1" class="bmd-label-floating">Identifiant</label>
+											<input required type="text" disabled class="form-control-plaintext" id="exampleInputEmail1" ng-value="x.identifiant">
+										</div>
+									</div>
+								</form>
+							</div>
+
+
+
+
+						</div>
+					</div>
+
+
+					<div class="row">
+						<div class="col">
+							<h3 class="mb-0"><strong>Top ten</strong></h3>
+							<p class="text-muted mb-4">Découvrez qui sont les meilleurs</p>
+							<p ng-if="!topTen.length" class="lead">Pas assez de membre pour constituer le classement.</p>
+						</div>
+
+					</div>
+
+					<div class="row" ng-if="!loading">
+						<table ng-if="topTen.length" class="table">
+							<thead>
+								<tr>
+									<th scope="col">#</th>
+									<th scope="col">Identifiant</th>
+									<th scope="col">Date</th>
+									<th scope="col">Bonne réponse</th>
+									<th scope="col">Temps</th>
+									<th scope="col">Score</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr ng-repeat="x in topTen | orderBy: 'score' : true">
+									<th scope="row">{{$index + 1}}</th>
+									<td>{{ x.identifiant }}</td>
+									<td>{{ x.date | date: 'dd/MM/yyyy hh:mm' }}</td>
+									<td>{{ x.nbreponse }}</td>
+									<td>{{ x.temps }}</td>
+									<td>{{ x.score }}</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+				</div>
+
+
+			</div>
+
+
+
+			<!-- Notification -->
+			<div class="overflow col p-0" ng-controller="notificationController" ng-show="route === 'notification'">
+				<div class="container h-100 p-4">
+					<div class="row">
+						<div class="col">
+							<h3 class="mb-0"><strong>Défis</strong></h3>
+							<p class="text-muted mb-4">Consultez les défis reçus</p>
+							<p ng-if="!defis.length" class="lead">Il semblerez que vous n'ayez aucune demande de défi.</p>
+
+
+							<div class="row" ng-repeat="x in defis" ng-if="defis.length">
+								<div class="card col mt-4 p-4 d-flex justify-content-center align-items-center" style="cursor: pointer;">
+									<p class="mt-3">Défi reçu de la part de {{x.userDefiantNom}} {{x.userDefiantPrenom}}</p>
+									<div>
+										<button class="btn btn-success" ng-click="acceptDefi(x._id ,x)">Accepter</button>
+										<button class="btn btn-warning" ng-click="refuDefi(x._id ,$index)">Refuser</button>
+									</div>
+								</div>
+							</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+
+
+		</div>
+
+
+
+		<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+		 crossorigin="anonymous"></script>
+		<script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U"
+		 crossorigin="anonymous"></script>
+		<script src="https://cdn.rawgit.com/FezVrasta/snackbarjs/1.1.0/dist/snackbar.min.js"></script>
+		<script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9"
+		 crossorigin="anonymous"></script>
+		<script>$(document).ready(function () { $('body').bootstrapMaterialDesign(); });</script>
+</body>
+
+</html>
